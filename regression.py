@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import holidays
 
+from sklearn.preprocessing import LabelEncoder
+
 #%% Import data
 
 train_data = pd.read_csv("train.csv")
@@ -67,4 +69,22 @@ train_data = train_data.drop(['Argentina_holidays', 'Canada_holidays', 'Estonia_
                              'Japan_holidays', 'Spain_holidays'], axis=1)
 test_data = test_data.drop(['Argentina_holidays', 'Canada_holidays', 'Estonia_holidays',
                              'Japan_holidays', 'Spain_holidays'], axis=1)
+
+#%% EDA
+
+sns.barplot(data=train_data,
+             x='country',
+             y='num_sold',
+             hue='is_holiday')
+plt.show()
+
+#%% Label encode text columns
+
+encoder = LabelEncoder()
+
+text_cols = ['country', 'store', 'product', 'is_holiday']
+
+for var in text_cols:
+    train_data[var] = encoder.fit_transform(train_data.loc[:, var])
+    test_data[var] = encoder.fit_transform(test_data.loc[:, var])
 
