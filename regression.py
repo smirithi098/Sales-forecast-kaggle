@@ -34,6 +34,17 @@ train_data['month'] = train_data['date'].apply(lambda d: int(datetime.strftime(d
 test_data['year'] = test_data['date'].apply(lambda d: int(datetime.strftime(d, "%Y")))
 test_data['month'] = test_data['date'].apply(lambda d: int(datetime.strftime(d, "%m")))
 
+#%% Create column for weekend - boolean
+
+def if_weekend(col):
+    if col == 1 or col == 7:
+        return 1
+
+    return 0
+
+train_data['is_weekend'] = train_data.loc[:, 'week_day'].apply(if_weekend)
+test_data['is_weekend'] = test_data.loc[:, 'week_day'].apply(if_weekend)
+
 #%% get the list of holidays for all countries in all years
 
 years = np.concatenate((train_data['year'].unique(), test_data['year'].unique()), axis=None).tolist()
@@ -54,16 +65,9 @@ for i in countries:
 
 #%% Create a boolean column indicating whether the date for a country was a holiday
 
-def if_holiday(df):
-    if df['Argentina_holidays'] is True or df['Canada_holidays'] is True or \
-        df['Estonia_holidays'] is True or df['Japan_holidays'] is True or \
-            df['Spain_holidays'] is True:
-        return True
-    else:
-        return False
-
-train_data['is_holiday'] = train_data.iloc[:, -5:].apply(if_holiday, axis=1)
-test_data['is_holiday'] = test_data.iloc[:, -5:].apply(if_holiday, axis=1)
+train_data['is_holiday'] = train_data.iloc[:, -5:].sum(axis=1).astype('int')
+test_data['is_holiday'] = test_data.iloc[:, -5:].sum(axis=1).astype('int')
+#%% Drop the individual country's holiday list
 
 train_data = train_data.drop(['Argentina_holidays', 'Canada_holidays', 'Estonia_holidays',
                              'Japan_holidays', 'Spain_holidays'], axis=1)
@@ -72,19 +76,32 @@ test_data = test_data.drop(['Argentina_holidays', 'Canada_holidays', 'Estonia_ho
 
 #%% EDA
 
+# Does the holiday have an impact on sales?
 sns.barplot(data=train_data,
              x='country',
              y='num_sold',
              hue='is_holiday')
 plt.show()
 
+# Does the weekend have an impact on sales?
+sns.barplot(data=train_data,
+             x='country',
+             y='num_sold',
+             hue='is_weekend')
+plt.show()
 #%% Label encode text columns
 
 encoder = LabelEncoder()
 
-text_cols = ['country', 'store', 'product', 'is_holiday']
+text_cols = ['country', 'store', 'product']
 
 for var in text_cols:
     train_data[var] = encoder.fit_transform(train_data.loc[:, var])
     test_data[var] = encoder.fit_transform(test_data.loc[:, var])
+
+#%% Determine if there is any multi-collinearity
+
+sns.heatmap(train_data.iloc[:, 2:].corr(), annot=True, fmt=".2f")
+plt.show()
+
 
