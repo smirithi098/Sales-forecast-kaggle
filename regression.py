@@ -7,7 +7,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import holidays
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
 
 #%% Import data
 
@@ -89,6 +92,10 @@ sns.barplot(data=train_data,
              y='num_sold',
              hue='is_weekend')
 plt.show()
+
+sns.lineplot(data=train_data, x="date", y="num_sold", hue="country")
+plt.tight_layout()
+plt.show()
 #%% Label encode text columns
 
 encoder = LabelEncoder()
@@ -104,4 +111,30 @@ for var in text_cols:
 sns.heatmap(train_data.iloc[:, 2:].corr(), annot=True, fmt=".2f")
 plt.show()
 
+#%% Split the data into predictors and response variable
 
+predictors = ['country', 'store', 'product', 'week_day', 'year', 'month', 'is_weekend', 'is_holiday']
+
+X = train_data.loc[:, predictors]
+y = train_data.loc[:, 'num_sold']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=1)
+
+#%% Fit the RandomForest regressor
+
+reg_model = RandomForestRegressor(n_estimators=20, criterion='absolute_error', max_samples=5500)
+
+reg_model.fit(X_train, y_train)
+
+#%% Predict using the built model
+
+y_pred = reg_model.predict(X_test)
+
+pred_df = pd.DataFrame({'actual': y_test, 'predicted': y_pred})
+
+#%% Plot the results and error score
+
+print(mean_absolute_error(y_test, y_pred))
+
+sns.lmplot(data=pred_df, x='actual', y='predicted')
+plt.show()
