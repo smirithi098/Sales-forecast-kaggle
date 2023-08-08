@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import holidays
 
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
@@ -138,3 +138,15 @@ print(mean_absolute_error(y_test, y_pred))
 
 sns.lmplot(data=pred_df, x='actual', y='predicted')
 plt.show()
+
+#%% Fit the model on the test data
+
+test_X = test_data.iloc[:, 2:]
+
+test_pred = reg_model.predict(test_X)
+
+#%% Export final results to csv file
+
+final_df = pd.DataFrame({'id': test_data['id'], 'num_sold': test_pred})
+
+final_df.to_csv("submission.csv", index=False)
